@@ -67,7 +67,7 @@ def hermite_poly(X, n):
     return func
 
 
-def onescale_grid_hermite_gaussian(size, scale, max_order=None):
+def hermite_basis_varying_order(size, scale, max_order=None):
     print(f'size={size}, scale={scale}, max_order={max_order}')
     max_order = max_order or size - 1
     X = torch.linspace(-(size // 2), size // 2, size)
@@ -84,10 +84,10 @@ def onescale_grid_hermite_gaussian(size, scale, max_order=None):
     return basis
 
 
-def multiscale_hermite_gaussian(size, base_scale, max_order=4, mult=2, num_funcs=None):
+def hermite_basis_varying_sigma(size, base_scale, max_order=4, mult=2, num_funcs=None):
     '''Basis of Hermite polynomials with Gaussian Envelope.
     The maximum order is shared between functions. More functions are added
-    by decreasing the scale.
+    by decreasing the scale (sigma).
     '''
     num_funcs = num_funcs or size ** 2
     num_funcs_per_scale = ((max_order + 1) * (max_order + 2)) // 2
@@ -122,7 +122,7 @@ def steerable_A(size, scales, effective_size):
     basis_tensors = []
     for scale in scales:
         size_before_pad = int(size * scale / max_scale) // 2 * 2 + 1
-        basis = onescale_grid_hermite_gaussian(size_before_pad, scale, max_order)
+        basis = hermite_basis_varying_order(size_before_pad, scale, max_order)
         basis = basis[None, :, :, :]
         pad_size = (size - size_before_pad) // 2
         basis = F.pad(basis, [pad_size] * 4)[0]
@@ -136,7 +136,7 @@ def steerable_B(size, scales, effective_size, mult=1.4, max_order=4):
     basis_tensors = []
     for scale in scales:
         size_before_pad = int(size * scale / max_scale) // 2 * 2 + 1
-        basis = multiscale_hermite_gaussian(size_before_pad,
+        basis = hermite_basis_varying_sigma(size_before_pad,
                                             base_scale=scale,
                                             max_order=max_order,
                                             mult=mult,
@@ -151,7 +151,7 @@ def steerable_B(size, scales, effective_size, mult=1.4, max_order=4):
 def mhg_grid(size, base_scale, mult, max_func_order, max_scale_order):
     num_funcs = ((max_func_order + 1) * (max_func_order + 2)) // 2
     num_funcs = num_funcs * max_scale_order
-    grid = multiscale_hermite_gaussian(
+    grid = hermite_basis_varying_sigma(
         size, base_scale, max_order=max_func_order, num_funcs=num_funcs)
     grid = grid.view(max_scale_order, -1, size, size)
     return grid

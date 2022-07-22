@@ -22,7 +22,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from .base import _Basis, normalize_basis_by_min_scale
-from .hermite_basis import onescale_grid_hermite_gaussian, multiscale_hermite_gaussian
+from .hermite_basis import hermite_basis_varying_order, hermite_basis_varying_sigma
 
 
 def get_basis_filename(size, effective_size, scales):
@@ -125,7 +125,7 @@ class DISCOBasisA(_Basis):
             raise FileNotFoundError(
                 "No basis found at {}. Calculate it first with `calculate_disco_basis.py`".format(fpath))
 
-        W = onescale_grid_hermite_gaussian(
+        W = hermite_basis_varying_order(
             effective_size, basis_min_scale, max_order=effective_size - 1).view(self.num_funcs, -1)
         basis = (W @ basis.view(self.num_funcs, -1)).view(self.num_funcs, len(scales), size, size)
         basis = normalize_basis_by_min_scale(basis)
@@ -157,7 +157,7 @@ class DISCOBasisB(_Basis):
         except FileNotFoundError:
             raise FileNotFoundError(
                 "No basis found at {}. Calculate it first with `calculate_disco_basis.py`".format(fpath))
-        W = multiscale_hermite_gaussian(
+        W = hermite_basis_varying_sigma(
             effective_size, basis_min_scale, basis_max_order, basis_mult)
         W = W.view(self.num_funcs, -1)
         basis = (W @ basis.view(self.num_funcs, -1)).view(self.num_funcs, len(scales), size, size)
